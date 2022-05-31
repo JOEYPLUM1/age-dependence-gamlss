@@ -1,0 +1,171 @@
+---
+title: "Assessing and Accounting for the Dependence of Age in Xe-MRI Using GAMLSS"
+author: "Joseph Plummer"
+date: "5/31/2022"
+output:
+  html_document:
+    df_print: paged
+  html_notebook:
+    code_folding: show
+---
+
+------------------------------------------------------------------------
+
+## R Notebook
+This is an [R Markdown](http://rmarkdown.rstudio.com) document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. 
+
+When you click the **Knit** button in **R-studio**, a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+------------------------------------------------------------------------
+
+## Goals of this demo
+1. Share GAMLSS code examples via this interactive notebook.
+2. Assess the dependence of age.
+3. Account for age dependence in gas-exchange binned analysis. 
+
+------------------------------------------------------------------------
+
+## Load libraries
+You can install a library if necessary by using `install.packages()`.
+
+```{r, include=FALSE}
+library(gamlss)
+library(ggplot2)
+```
+
+------------------------------------------------------------------------
+
+## Motivation for this work
+The Xe-MRI community uses several methods to perform image analysis. The most trivial method is to simply calculate the median signal intensity, $\mu$, of the voxels of a disease subject. However, this method only provides a global overview of a subject's voxels, and is likely to be insensitive to small changes caused by disease (which is what we are fundamentally interested in).
+
+Thus, many studies implement a linear binning (LB) technique to make statistical comparisons {Z. Wang, *et. al.* 2017}. The LB method assumes that, for an aggregated healthy-reference cohort, the voxel-wise signal intensities of a gas-exchange metric, $\textbf{y}$, fits a normal distribution, described by:
+\begin{equation}
+\textbf{y}\sim N(\mu, \sigma)
+\end{equation}
+where $\sigma$ is the variation. Note, bold typeface represents a vector (lowercase) or matrix (uppercase), and non-bold typeface represents scalar values. Subsequently, statistical inferences are made by calculating the fractions of the lung that fall into each z-score (percentile) bin (-2, -1, 0, +1, +2) of the healthy normal distribution.
+
+```{r, echo=FALSE}
+# Choose a range of signal intensities to simulate distribution over:
+simulated_locations <- seq(0, 1, length.out = 200)
+
+# Simulate a normal distribution:
+simulated_distributions <- data.frame(indx = simulated_locations)
+simulated_distributions$normal_base <- dNO(
+  x = simulated_locations,
+  mu = 0.4,
+  sigma = (0.3)^2
+)
+
+# Simulate another normal distribution:
+simulated_distributions$normal_perturbed <- dNO(
+  x = simulated_locations,
+  mu = 0.6,
+  sigma = (0.25)^2
+)
+
+# Plot the distributions:
+ggplot() +
+  geom_path(data = simulated_distributions,
+            aes(x = indx,
+                y = normal_base),
+            color = "Black",
+            linetype = "solid",
+            size = 1.5,
+            na.rm = TRUE) +
+  geom_path(data = simulated_distributions,
+            aes(x = indx,
+                y = normal_perturbed),
+            color = "darkgreen",
+            linetype = "dashed",
+            size = 1.5,
+            na.rm = TRUE) +
+  ggtitle("Example normal distributions") + 
+  theme(legend.position = "right") +
+  xlab('Signal intensity (A.U.)') +
+  theme(axis.title.x = element_text(color = "black", size = 18),
+        axis.title.y = element_blank(),
+        legend.text = element_text(size = 16),
+        legend.key.width = unit(1, 'cm'),
+        title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        plot.margin = unit(c(0, 0, 0, 0), "mm")) 
+```
+
+A generalized linear-binning (GLB) method was later proposed to account for skew, by using a Box-Cox transformation to transform a skewed distribution into a normal distribution {M. He, *et. al.* 2017. Once transformed, the same z-score approach can then be implemented and then transformed back into its original distribution. An equivalent way to represent this transformation is to fit $y$ to a Box-Cox Cole-Green distribution:
+\begin{equation}
+\textbf{y}\sim BCCG(\mu,\sigma,\nu)
+\end{equation}
+where $\nu$ is the distribution skew, equal to the Box-Cox transform power used in the transformation.
+
+```{r, echo=FALSE}
+# Choose a range of signal intensities to simulate distribution over:
+simulated_locations <- seq(0, 1, length.out = 200)
+
+# Simulate a normal distribution:
+simulated_distributions <- data.frame(indx = simulated_locations)
+simulated_distributions$BCCG_base <- dBCCG(
+  x = simulated_locations,
+  mu = 0.4,
+  sigma = 0.3,
+  nu = 1
+)
+
+# Simulate another normal distribution:
+simulated_distributions$BCCG_perturbed <- dBCCG(
+  x = simulated_locations,
+  mu = 0.6,
+  sigma = 0.25,
+  nu = 2
+)
+
+# Plot the distributions:
+ggplot() +
+  geom_path(data = simulated_distributions,
+            aes(x = indx,
+                y = BCCG_base),
+            color = "Black",
+            linetype = "solid",
+            size = 1.5,
+            na.rm = TRUE) +
+  geom_path(data = simulated_distributions,
+            aes(x = indx,
+                y = BCCG_perturbed),
+            color = "darkgreen",
+            linetype = "dashed",
+            size = 1.5,
+            na.rm = TRUE) +
+  ggtitle("Example BCCG distributions") + 
+  theme(legend.position = "right") +
+  xlab('Signal intensity (A.U.)') +
+  theme(axis.title.x = element_text(color = "black", size = 18),
+        axis.title.y = element_blank(),
+        legend.text = element_text(size = 16),
+        legend.key.width = unit(1, 'cm'),
+        title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        plot.margin = unit(c(0, 0, 0, 0), "mm")) 
+```
+
+To date, the above methods have assumed constant distribution parameters (median, variance, and skew), and thus a constant healthy-reference distribution. However, pulmonary structure and function are known to vary substantially with demographic variables, like *age*.
+
+**Our proposal**
+
+To expand prior methods, we propose a method that fits $\textbf{y}$ to a Box-Cox power-exponential distribution, that is dependent on all possible distribution parameters (median, variance, skew, and kurtosis). Furthermore, we use GAMLSS methods to make our fitted distribution flexible to some explanatory variable, $\textbf{x}$, which in our case is age. This can be described by:
+
+\begin{equation}
+\textbf{y}\sim BCPE(\textbf{$\mu$},\textbf{\sigma},\textbf{\nu},\textbf{\tau})
+\end{equation}
+
+The final distribution parameter, $\tau$, represents kurtosis. The bold typeface is used to show the non-scalar (vector) type of the parameter. Prior methods asssumed a constant distribution, so a scalar distribution parameter set could be used, while this proposed method fits to a flexible age-dependent parameter set, given by vectors. The mathematics behind this is discussed in some detail in our paper, with extensive details in the GAMLSS book: [A flexible regression approach using GAMLSS
+in R](https://www.gamlss.com/wp-content/uploads/2013/01/book-2010-Athens1.pdf).
+
+------------------------------------------------------------------------
+
+## Import data
+We will be using randomly sampled RBC:membrane (ratio) data from a range of subjects at Cincinnati Children's Hospital. All personal information has been removed, and only 500 voxels were sampled per subject. 
+```{r, eval=TRUE}
+# Import data:
+load("data/RBC_Membrane_Voxels.rdata")
+summary(Voxels)
+```
+
