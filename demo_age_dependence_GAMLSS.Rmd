@@ -5,13 +5,14 @@ date: "5/31/2022"
 output:
   html_document:
     df_print: paged
-  html_notebook:
     code_folding: show
+  # html_notebook:
+  #   code_folding: show
 ---
 
 ------------------------------------------------------------------------
 
-## R Notebook
+## R Markdown
 This is an [R Markdown](http://rmarkdown.rstudio.com) document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. 
 
 When you click the **Knit** button in **R-studio**, a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
@@ -47,7 +48,7 @@ Thus, many studies implement a linear binning (LB) technique to make statistical
 \end{equation}
 where $\sigma$ is the variation. Note, bold typeface represents a vector (lowercase) or matrix (uppercase), and non-bold typeface represents scalar values. Subsequently, statistical inferences are made by calculating the fractions of the lung that fall into each z-score (percentile) bin (-2, -1, 0, +1, +2) of the healthy normal distribution.
 
-```{r, echo=FALSE}
+```{r, class.source = 'fold-hide'}
 # Choose a range of signal intensities to simulate distribution over:
 simulated_locations <- seq(0, 1, length.out = 200)
 
@@ -100,11 +101,11 @@ A generalized linear-binning (GLB) method was later proposed to account for skew
 \end{equation}
 where $\nu$ is the distribution skew, equal to the Box-Cox transform power used in the transformation.
 
-```{r, echo=FALSE}
+```{r, class.source = 'fold-hide'}
 # Choose a range of signal intensities to simulate distribution over:
 simulated_locations <- seq(0, 1, length.out = 200)
 
-# Simulate a normal distribution:
+# Simulate a BCCG distribution:
 simulated_distributions <- data.frame(indx = simulated_locations)
 simulated_distributions$BCCG_base <- dBCCG(
   x = simulated_locations,
@@ -113,7 +114,7 @@ simulated_distributions$BCCG_base <- dBCCG(
   nu = 1
 )
 
-# Simulate another normal distribution:
+# Simulate another BCCG distribution:
 simulated_distributions$BCCG_perturbed <- dBCCG(
   x = simulated_locations,
   mu = 0.6,
@@ -163,11 +164,11 @@ To expand prior methods, we propose a method that fits $\textbf{y}$ to a Box-Cox
 The final distribution parameter, $\tau$, represents kurtosis. The bold typeface is used to show the non-scalar (vector) type of the parameter. Prior methods asssumed a constant distribution, so a scalar distribution parameter set could be used. The proposed method fits a flexible distribution (depends on age) to $\textbf{y}$, therefore the distribution parameters inside the model cannot be represented by scalars. The mathematics behind this is discussed in some detail in our paper, with a more rigorous discussion in the GAMLSS book: [A flexible regression approach using GAMLSS
 in R](https://www.gamlss.com/wp-content/uploads/2013/01/book-2010-Athens1.pdf). 
 
-```{r, echo=FALSE}
+```{r, class.source = 'fold-hide'}
 # Choose a range of signal intensities to simulate distribution over:
 simulated_locations <- seq(0, 1, length.out = 200)
 
-# Simulate a normal distribution:
+# Simulate a BCPE distribution:
 simulated_distributions <- data.frame(indx = simulated_locations)
 simulated_distributions$BCPE_base <- dBCPE(
   x = simulated_locations,
@@ -177,7 +178,7 @@ simulated_distributions$BCPE_base <- dBCPE(
   tau = 2
 )
 
-# Simulate another normal distribution:
+# Simulate another BCPE distribution:
 simulated_distributions$BCPE_perturbed <- dBCPE(
   x = simulated_locations,
   mu = 0.6,
