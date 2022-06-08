@@ -6,8 +6,6 @@ output:
   html_document:
     df_print: paged
     code_folding: show
-  # html_notebook:
-  #   code_folding: show
 ---
 
 ------------------------------------------------------------------------
@@ -415,7 +413,7 @@ mtext(paste("Generalized Additive Models for RBC:membrane"), outer = TRUE, cex =
 
 ## Interpretation
 
-As described in the paper, the $R^2$ values can be used to determine the effect size of age on a given distribution parameterwhere effect sizes of 4%, 25%, and 64% are termed small, medium, and large effects, respectively. (This is found by multiplying $R^2$ by 100). The $p$-value is not a measure of effect size; rather, it is a measure of the likelihood that the fit is correct for the given data. As recommended by the initial GAM papers, a formal cut-off of $p$<0.05 should not be used to define significance. 
+As described in the paper, the $R^2$ values can be used to determine the effect size of age on a given distribution parameter where effect sizes of 4%, 25%, and 64% are termed small, medium, and large effects, respectively. (This is found by multiplying $R^2$ by 100). The $p$-value is not a measure of effect size; rather, it is a measure of the likelihood that the fit is correct for the given data. As recommended by the initial GAM papers, a formal cut-off of $p$<0.05 should not be used to define significance. 
 
 For a quick interpretation, one can see that age has: medium effect size on the $\mu$ distribution parameter (median), and small effect size on the $\sigma$, $\nu$, and $\tau$ parameters (coefficient of variation, skew, and kurtosis). This information is useful, because we can now use it to build our full GAMLSS model. For example, if we wanted to reduce the possible degrees of freedom in the model, we could say that the effect size of age on $\tau$ is very small - therefore we will restrict this parameter link function in the model to having no dependence on age. However, this is up to the user depending on how many data points they have, and how many explanatory variables.
 
