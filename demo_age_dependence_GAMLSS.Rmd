@@ -3,7 +3,7 @@ title: "Assessing and Accounting for the Dependence of Age in Xe-MRI Using GAMLS
 author: "Joseph Plummer"
 date: "5/31/2022"
 output:
-  html_document:
+  html_document:    
     df_print: paged
     code_folding: show
 ---
@@ -52,35 +52,46 @@ simulated_locations <- seq(0, 1, length.out = 200)
 
 # Simulate a normal distribution:
 simulated_distributions <- data.frame(indx = simulated_locations)
+mu_base <- 0.4
+sigma_base <- 0.3
 simulated_distributions$normal_base <- dNO(
   x = simulated_locations,
-  mu = 0.4,
-  sigma = (0.3)^2
+  mu = mu_base,
+  sigma = (sigma_base)^2
 )
 
 # Simulate another normal distribution:
+mu_perturbed <- 0.6
+sigma_perturbed <- 0.25
 simulated_distributions$normal_perturbed <- dNO(
   x = simulated_locations,
-  mu = 0.6,
-  sigma = (0.25)^2
+  mu = mu_perturbed,
+  sigma = (sigma_perturbed)^2
 )
+
+# Legend:
+leg = c(substitute(paste("N(",mb, ", ", sb,")"), list(mb=mu_base[1], sb=sigma_base[1])),
+        substitute(paste("N(",mp, ", ", sp,")"), list(mp=mu_perturbed[1], sp=sigma_perturbed[1])))
 
 # Plot the distributions:
 ggplot() +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = normal_base),
-            color = "Black",
+                y = normal_base,
+                color = "Normal"),
             linetype = "solid",
             size = 1.5,
             na.rm = TRUE) +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = normal_perturbed),
-            color = "darkgreen",
+                y = normal_perturbed,
+                color = "Perturbed Normal"),
             linetype = "dashed",
             size = 1.5,
             na.rm = TRUE) +
+  scale_color_manual(name = expression(N(mu,sigma)), 
+                     values = c("Normal" = "darkblue", "Perturbed Normal" = "red"),
+                     labels = c(leg)) +
   ggtitle("Example normal distributions") + 
   theme(legend.position = "right") +
   xlab('Signal intensity (A.U.)') +
@@ -104,38 +115,50 @@ where $\nu$ is the distribution skew, equal to the Box-Cox transform power used 
 simulated_locations <- seq(0, 1, length.out = 200)
 
 # Simulate a BCCG distribution:
-simulated_distributions <- data.frame(indx = simulated_locations)
+mu_base <- 0.4
+sigma_base <- 0.3
+nu_base <- 1
 simulated_distributions$BCCG_base <- dBCCG(
   x = simulated_locations,
-  mu = 0.4,
-  sigma = 0.3,
-  nu = 1
+  mu = mu_base,
+  sigma = sigma_base,
+  nu = nu_base
 )
 
 # Simulate another BCCG distribution:
+mu_perturbed <- 0.6
+sigma_perturbed <- 0.25
+nu_perturbed <- 2
 simulated_distributions$BCCG_perturbed <- dBCCG(
   x = simulated_locations,
-  mu = 0.6,
-  sigma = 0.25,
-  nu = 2
+  mu = mu_perturbed,
+  sigma = sigma_perturbed,
+  nu = nu_perturbed
 )
+
+# Legend:
+leg = c(substitute(paste("BCCG(",mb, ", ", sb,", ", nb,")"), list(mb=mu_base[1], sb=sigma_base[1], nb=nu_base[1])),
+        substitute(paste("BCCG(",mp, ", ", sp,", ", np,")"), list(mp=mu_perturbed[1], sp=sigma_perturbed[1], np=nu_perturbed[1])))
 
 # Plot the distributions:
 ggplot() +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = BCCG_base),
-            color = "Black",
+                y = BCCG_base,
+                color = "BCCG"),
             linetype = "solid",
             size = 1.5,
             na.rm = TRUE) +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = BCCG_perturbed),
-            color = "darkgreen",
+                y = BCCG_perturbed,
+                color = "Perturbed BCCG"),
             linetype = "dashed",
             size = 1.5,
             na.rm = TRUE) +
+  scale_color_manual(name = expression(BCCG(mu,sigma,nu)), 
+                     values = c("BCCG" = "darkblue", "Perturbed BCCG" = "red"),
+                     labels = c(leg)) +
   ggtitle("Example BCCG distributions") + 
   theme(legend.position = "right") +
   xlab('Signal intensity (A.U.)') +
@@ -168,39 +191,56 @@ simulated_locations <- seq(0, 1, length.out = 200)
 
 # Simulate a BCPE distribution:
 simulated_distributions <- data.frame(indx = simulated_locations)
+mu_base <- 0.4
+sigma_base <- 0.3
+nu_base <- 1
+tau_base <- 2
 simulated_distributions$BCPE_base <- dBCPE(
   x = simulated_locations,
-  mu = 0.4,
-  sigma = 0.3,
-  nu = 1,
-  tau = 2
+  mu = mu_base,
+  sigma = sigma_base,
+  nu = nu_base,
+  tau = tau_base
 )
 
 # Simulate another BCPE distribution:
+mu_perturbed <- 0.6
+sigma_perturbed <- 0.25
+nu_perturbed <- 2
+tau_perturbed <- 10
 simulated_distributions$BCPE_perturbed <- dBCPE(
   x = simulated_locations,
-  mu = 0.6,
-  sigma = 0.25,
-  nu = 2,
-  tau = 10
+  mu = mu_perturbed,
+  sigma = sigma_perturbed,
+  nu = nu_perturbed,
+  tau = tau_perturbed
 )
+
+# Legend:
+leg = c(substitute(paste("BCPE(",mb, ", ", sb,", ", nb,", ", tb,")"), 
+                   list(mb=mu_base[1], sb=sigma_base[1], nb=nu_base[1], tb=tau_base[1])),
+        substitute(paste("BCPE(",mp, ", ", sp,", ", np,", ", tp,")"), 
+                   list(mp=mu_perturbed[1], sp=sigma_perturbed[1],np=nu_perturbed[1],tp=tau_perturbed[1])))
 
 # Plot the distributions:
 ggplot() +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = BCPE_base),
-            color = "Black",
+                y = BCPE_base,
+                color = "BCPE"),
             linetype = "solid",
             size = 1.5,
             na.rm = TRUE) +
   geom_path(data = simulated_distributions,
             aes(x = indx,
-                y = BCPE_perturbed),
-            color = "darkgreen",
+                y = BCPE_perturbed,
+                color = "Perturbed BCPE"),
             linetype = "dashed",
             size = 1.5,
             na.rm = TRUE) +
+    scale_color_manual(name = expression(BCCG(mu,sigma,nu,tau)), 
+                     values = c("BCPE" = "darkblue", "Perturbed BCPE" = "red"),
+                     labels = c(leg)) +
   ggtitle("Example BCPE distributions") + 
   theme(legend.position = "right") +
   xlab('Signal intensity (A.U.)') +
@@ -213,20 +253,22 @@ ggplot() +
         plot.margin = unit(c(0, 0, 0, 0), "mm")) 
 ```
 
-
 ------------------------------------------------------------------------
+
 \newpage
 # Assess age dependence in gas-exchange MRI
 
 ## Import data
 
 We will be using randomly sampled RBC:membrane (ratio) data from a range of subjects at Cincinnati Children's Hospital. All personal information has been removed, and only 500 voxels were sampled per subject. 
+
 ```{r, eval=TRUE}
 # Import data:
 load("data/RBC_Membrane_Voxels.rdata")
 ```
 
 Split the dataframe into respective ages, and study variables.
+
 ```{r, eval=TRUE}
 y = Voxels
 y_subj = split(Voxels, Voxels$Age)
@@ -239,6 +281,7 @@ num_voxels = dim(Voxels)[1]/num_subj
 ## Use GAMLSS to fit distributions
 
 Fit each subject's voxels, $y_{subj}$ to a  BCPE distribution. We only want a single distribution per subject, so we are setting the link functions for each distribution per subject to `.formula = ~ 1`. This means a single distribution parameter will be extracted for all $\textbf x$.
+
 ```{r, results='hide'}
 # Declare distribution family:
 fit_fam = BCPE(
