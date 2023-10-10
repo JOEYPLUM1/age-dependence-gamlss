@@ -461,6 +461,44 @@ As described in the paper, the $R^2$ values can be used to determine the effect 
 
 For a quick interpretation, one can see that age has: medium effect size on the $\mu$ distribution parameter (median), and small effect size on the $\sigma$, $\nu$, and $\tau$ parameters (coefficient of variation, skew, and kurtosis). This information is useful, because we can now use it to build our full GAMLSS model. For example, if we wanted to reduce the possible degrees of freedom in the model, we could say that the effect size of age on $\tau$ is very small - therefore we will restrict this parameter link function in the model to having no dependence on age. However, this is up to the user depending on how many data points they have, and how many explanatory variables.
 
+## Optional: Extract the fitted blue line and 95% confidence intervals 
+
+It may be useful to extract the fitted blue line and 95% confidence intervals for external analysis pipelines. Here's how (using $\mu$ only):
+
+```{r, message=FALSE, warning=FALSE, fig.width=4, fig.height=4}
+# Fit generalized additive models:
+mod_gam_mu <- gam(mu ~ s(Age, k = 1, bs = "cr"), data = fitted_params)
+
+# Generate data that you want to predict the fitted values from (we'll just use the same input age data):
+new_data <- data.frame(Age)
+
+# Generate predictions: 
+predicted_data <- data.frame(as.vector(predict.gam(mod_gam_mu, 
+                                                   new_data, 
+                                                   se.fit=TRUE)))
+
+# Make data frame:
+fitting<-  data.frame(c(new_data), c(predicted_data$fit))
+fitting$se <- c(predicted_data$se.fit)
+colnames(fitting) <- c("Age", "mu", "se") 
+
+# Calculate upper and lower confidence intervals using standard error estimates from mgcv (GAM) package:
+fitting$upper_lim <- fitting$mu + (2 * fitting$se)
+fitting$lower_lim <- fitting$mu - (2 * fitting$se)
+
+# Plot the results
+ggplot(fitting, aes(x=Age)) + 
+  geom_line(aes(y = mu), color = "blue", size=2) + 
+  geom_line(aes(y = upper_lim), color="red", linetype="twodash", size=1) +
+  geom_line(aes(y = lower_lim), color="red", linetype="twodash", size=1)
+
+# Export the data in a format of your choice:
+head(fitting)
+write.csv(fitting, "fitting.csv", row.names=FALSE)
+
+
+```
+
 ------------------------------------------------------------------------
 
 \newpage
